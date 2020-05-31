@@ -8,9 +8,16 @@
     "type-check": "tsc"
   },
   "dependencies": {
+    "@types/react-calendar-heatmap": "^1.6.2",
+    "@types/twitter": "^1.7.0",
+    "bootstrap": "^4.5.0",
     "next": "latest",
     "react": "^16.12.0",
-    "react-dom": "^16.12.0"
+    "react-bootstrap": "^1.0.1",
+    "react-calendar-heatmap": "^1.8.1",
+    "react-dom": "^16.12.0",
+    "react-tooltip": "^4.2.6",
+    "twitter": "^1.7.1"
   },
   "devDependencies": {
     "@types/node": "^12.12.21",

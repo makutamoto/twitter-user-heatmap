@@ -1,64 +1,59 @@
-import { GetStaticProps, GetStaticPaths } from 'next'
+import { useState } from 'react';
+import Router from 'next/router';
+import { GetServerSidePropsContext } from 'next';
+import { Form, Alert } from 'react-bootstrap';
 
-import { User } from '../../interfaces'
-import { sampleUserData } from '../../utils/sample-data'
-import Layout from '../../components/Layout'
-import ListDetail from '../../components/ListDetail'
+import { User } from '../../lib/twitter';
+import UsernameInput from '../../components/UsernameInput';
+import UserView, { UserData } from '../../components/UserView';
 
-type Props = {
-  item?: User
-  errors?: string
+export interface IDProps {
+    id: string,
+    data: UserData | null,
 }
-
-const StaticPropsDetail: React.FunctionComponent<Props> = ({
-  item,
-  errors,
-}) => {
-  if (errors) {
+export default function (props: IDProps) {
+    const [username, setUsername] = useState(props.id);
+    const onSubmit = () => Router.push(`/users/${username}`);
+    const onChange = (val: string) => setUsername(val);
     return (
-      <Layout title="Error | Next.js + TypeScript Example">
-        <p>
-          <span style={{ color: 'red' }}>Error:</span> {errors}
-        </p>
-      </Layout>
-    )
-  }
-
-  return (
-    <Layout
-      title={`${
-        item ? item.name : 'User Detail'
-      } | Next.js + TypeScript Example`}
-    >
-      {item && <ListDetail item={item} />}
-    </Layout>
-  )
+        <>
+            <Form onSubmit={onSubmit}>
+                <Form.Group>
+                    <UsernameInput value={username} onChange={onChange} />
+                </Form.Group>
+            </Form>
+            {props.data === null ?
+                <Alert variant="danger">User not found!</Alert> 
+                :
+                <UserView {...props.data} />
+            }
+        </>
+    );
 }
 
-export default StaticPropsDetail
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  // Get the paths we want to pre-render based on users
-  const paths = sampleUserData.map((user) => ({
-    params: { id: user.id.toString() },
-  }))
-
-  // We'll pre-render only these paths at build time.
-  // { fallback: false } means other routes should 404.
-  return { paths, fallback: false }
-}
-
-// This function gets called at build time on server-side.
-// It won't be called on client-side, so you can even do
-// direct database queries.
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  try {
-    const id = params?.id
-    const item = sampleUserData.find((data) => data.id === Number(id))
-    // By returning { props: item }, the StaticPropsDetail component
-    // will receive `item` as a prop at build time
-    return { props: { item } }
-  } catch (err) {
-    return { props: { errors: err.message } }
-  }
+export async function getServerSideProps(props: GetServerSidePropsContext) {
+    let id = props.params!.id as string;
+    try {
+        let user = new User(id);
+        let heatmap = await user.getTweetHeatmapAndAverage();
+        let icon_link = await user.getUserIcon();
+        icon_link = icon_link.substr(0, icon_link.length - 10) + "400x400.jpg"
+        return {
+            props: {
+                id,
+                data: {
+                    id,
+                    heatmap: heatmap.heatmap,
+                    icon_link,
+                },
+            },
+        };
+    } catch(_) {
+        return {
+            props: {
+                id,
+                data: null,
+            }
+        }
+    }
 }
