@@ -8,6 +8,7 @@ var client = new Twitter({
 });
 
 export interface UserData {
+    name: string,
     created_at: string,
     statuses_count: number,
     profile_image_url_https: string,
@@ -48,6 +49,13 @@ export class User {
         let average = Math.round(count / days * 10) / 10;
         return average;
     }
+    getUserName() {
+        return new Promise<string>((resolve, reject) => {
+            this.getUserData().then(() => {
+                resolve(this.data!.name);
+            }, reject);
+        });
+    }
     getUserIcon() {
         return new Promise<string>((resolve, reject) => {
             this.getUserData().then(() => {
@@ -56,7 +64,7 @@ export class User {
         });
     }
     getWholeAverageNofTweets() {
-        return new Promise((resolve, reject) => {
+        return new Promise<number>((resolve, reject) => {
             this.getUserData().then(() => {
                 let created_at = new Date(this.data!.created_at);
                 let now = new Date();

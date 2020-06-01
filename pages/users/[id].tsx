@@ -1,10 +1,7 @@
-import { useState } from 'react';
-import Router from 'next/router';
 import { GetServerSidePropsContext } from 'next';
-import { Form, Alert } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 
 import { User } from '../../lib/twitter';
-import UsernameInput from '../../components/UsernameInput';
 import UserView, { UserData } from '../../components/UserView';
 
 export interface IDProps {
@@ -12,16 +9,8 @@ export interface IDProps {
     data: UserData | null,
 }
 export default function (props: IDProps) {
-    const [username, setUsername] = useState(props.id);
-    const onSubmit = () => Router.push(`/users/${username}`);
-    const onChange = (val: string) => setUsername(val);
     return (
         <>
-            <Form onSubmit={onSubmit}>
-                <Form.Group>
-                    <UsernameInput value={username} onChange={onChange} />
-                </Form.Group>
-            </Form>
             {props.data === null ?
                 <Alert variant="danger">User not found!</Alert> 
                 :
@@ -36,19 +25,25 @@ export async function getServerSideProps(props: GetServerSidePropsContext) {
     try {
         let user = new User(id);
         let heatmap = await user.getTweetHeatmapAndAverage();
+        let name = await user.getUserName();
         let icon_link = await user.getUserIcon();
+        let whole_average = await user.getWholeAverageNofTweets();
         icon_link = icon_link.substr(0, icon_link.length - 10) + "400x400.jpg"
         return {
             props: {
                 id,
                 data: {
                     id,
+                    name,
+                    average: heatmap.average,
+                    whole_average,
                     heatmap: heatmap.heatmap,
                     icon_link,
                 },
             },
         };
-    } catch(_) {
+    } catch(e) {
+        console.error(e);
         return {
             props: {
                 id,
